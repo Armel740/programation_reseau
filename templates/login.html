@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion Admin - Serveur de Fichiers{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-circle display-4 text-primary"></i>
+                    <h3 class="mt-2">Connexion Admin</h3>
+                </div>
+                
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Se connecter
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Identifiants par défaut: admin / admin123
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Retour à l'accueil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Serveur de Fichiers{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-gear"></i> Panel d'Administration</h1>
+            <div>
+                <span class="badge bg-success" id="status-badge">
+                    <i class="bi bi-circle-fill" id="status-icon"></i>
+                    <span id="status-text">Connecté</span>
+                </span>
+            </div>
+        </div>
+        
+      
+        <div id="live-notifications" class="mb-3"></div>
+        
+       
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-cloud-upload"></i> Ajouter un fichier</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" id="upload-form">
+                    <div class="row align-items-end">
+                        <div class="col-md-8">
+                            <label for="file" class="form-label">Fichier à uploader</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
+                            <small class="text-muted">
+                                Types autorisés: txt, pdf, png, jpg, jpeg, gif, doc, docx, zip, rar (Max: 100MB)
+                            </small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100" id="upload-btn">
+                                <i class="bi bi-upload"></i> Uploader
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress" style="display: none;" id="upload-progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+       
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-files display-4"></i>
+                        <h3 id="total-files">{{ files|length }}</h3>
+                        <p>Fichiers total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-download display-4"></i>
+                        <h3 id="downloads-today">0</h3>
+                        <p>Téléchargements aujourd'hui</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people display-4"></i>
+                        <h3 id="active-users">1</h3>
+                        <p>Utilisateurs connectés</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-list"></i> Fichiers gérés</h5>
+                <span class="badge bg-secondary" id="files-count">{{ files|length }} fichier(s)</span>
+            </div>
+            <div class="card-body">
+                {% if files %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="files-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom du fichier</th>
+                                    <th>Taille</th>
+                                    <th>Date upload</th>
+                                    <th width="200">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="files-tbody">
+                                {% for file in files %}
+                                <tr data-file-id="{{ file.id }}">
+                                    <td>
+                                        <i class="bi bi-file-earmark"></i>
+                                        <strong>{{ file.original_name }}</strong>
+                                    </td>
+                                    <td>{{ file.formatted_size }}</td>
+                                    <td>{{ file.upload_date.split('.')[0] }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('download_file', file_id=file.id) }}" 
+                                               class="btn btn-outline-success" title="Télécharger">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            <a href="{{ url_for('delete_file', file_id=file.id) }}" 
+                                               class="btn btn-outline-danger"
+                                               title="Supprimer"
+                                               onclick="return confirm('Supprimer ce fichier ?')">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4" id="no-files-message">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">Aucun fichier uploadé</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+
+const socket = io();
+let downloadsToday = 0;
+
+
+socket.on('connect', function() {
+    console.log('Connecté au serveur');
+    socket.emit('join_admin');
+    updateStatus('Connecté', 'success');
+});
+
+socket.on('disconnect', function() {
+    console.log('Déconnecté du serveur');
+    updateStatus('Déconnecté', 'danger');
+});
+
+
+function updateStatus(text, type) {
+    const badge = document.getElementById('status-badge');
+    const icon = document.getElementById('status-icon');
+    const statusText = document.getElementById('status-text');
+    
+    badge.className = `badge bg-${type}`;
+    statusText.textContent = text;
+    
+    if (type === 'success') {
+        icon.className = 'bi bi-circle-fill';
+    } else {
+        icon.className = 'bi bi-x-circle-fill';
+    }
+}
+
+
+socket.on('admin_notification', function(data) {
+    showLiveNotification(data.message, data.type);
+});
+
+socket.on('file_downloaded', function(data) {
+    downloadsToday++;
+    document.getElementById('downloads-today').textContent = downloadsToday;
+    
+    showLiveNotification(
+        `📥 ${data.filename} téléchargé par ${data.ip} à ${data.time}`, 
+        'info'
+    );
+});
+
+socket.on('file_added', function(data) {
+    addFileToTable(data);
+    updateFilesCount();
+});
+
+socket.on('file_deleted', function(data) {
+    removeFileFromTable(data.file_id);
+    updateFilesCount();
+});
+
+
+function showLiveNotification(message, type = 'info') {
+    const container = document.getElementById('live-notifications');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    container.appendChild(alert);
+    
+   
+    setTimeout(() => {
+        if (alert.parentNode) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+
+
+function addFileToTable(file) {
+    const tbody = document.getElementById('files-tbody');
+    const noFilesMessage = document.getElementById('no-files-message');
+    
+    if (noFilesMessage) {
+        noFilesMessage.style.display = 'none';
+    }
+    
+    const row = document.createElement('tr');
+    row.setAttribute('data-file-id', file.id);
+    row.innerHTML = `
+        <td>
+            <i class="bi bi-file-earmark"></i>
+            <strong>${file.original_name}</strong>
+        </td>
+        <td>${file.formatted_size}</td>
+        <td>${file.upload_date}</td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <a href="/download/${file.id}" class="btn btn-outline-success" title="Télécharger">
+                    <i class="bi bi-download"></i>
+                </a>
+                <a href="/admin/delete/${file.id}" class="btn btn-outline-danger" title="Supprimer"
+                   onclick="return confirm('Supprimer ce fichier ?')">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+ 
+    row.style.backgroundColor = '#d4edda';
+    setTimeout(() => {
+        row.style.backgroundColor = '';
+    }, 2000);
+}
+
+function removeFileFromTable(fileId) {
+    const row = document.querySelector(`tr[data-file-id="${fileId}"]`);
+    if (row) {
+        row.remove();
+    }
+}
+
+function updateFilesCount() {
+    const count = document.querySelectorAll('#files-tbody tr').length;
+    document.getElementById('files-count').textContent = `${count} fichier(s)`;
+    document.getElementById('total-files').textContent = count;
+}
+
+
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+    const progressContainer = document.getElementById('upload-progress');
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    const uploadBtn = document.getElementById('upload-btn');
+    
+    
+    progressContainer.style.display = 'block';
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Upload...';
+    
+   
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 90) progress = 90;
+        
+        progressBar.style.width = progress + '%';
+        
+        if (progress >= 90) {
+            clearInterval(interval);
+        }
+    }, 200);
+});
+
+
+setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert:not(#live-notifications .alert)');
+    alerts.forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+    });
+}, 5000);
+</script>
+{% endblock %}

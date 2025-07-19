@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-files"></i> Fichiers Disponibles</h1>
+            <span class="badge bg-primary fs-6">{{ files|length }} fichier(s)</span>
+        </div>
+
+        {% if files %}
+            <div class="row g-4">
+                {% for file in files %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                       
+                        <div class="card-header bg-light border-0 p-2">
+                            <div class="d-flex align-items-center">
+                                {% set extension = file.original_name.split('.')[-1].lower() %}
+                                
+                            
+                                {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'] %}
+                                    <i class="bi bi-image text-success fs-4 me-2"></i>
+                                    <small class="badge bg-success">Image</small>
+                                {% elif extension in ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm'] %}
+                                    <i class="bi bi-camera-video text-primary fs-4 me-2"></i>
+                                    <small class="badge bg-primary">Vidéo</small>
+                                {% elif extension in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'] %}
+                                    <i class="bi bi-music-note text-info fs-4 me-2"></i>
+                                    <small class="badge bg-info">Audio</small>
+                                {% elif extension in ['pdf'] %}
+                                    <i class="bi bi-file-pdf text-danger fs-4 me-2"></i>
+                                    <small class="badge bg-danger">PDF</small>
+                                {% elif extension in ['doc', 'docx'] %}
+                                    <i class="bi bi-file-word text-primary fs-4 me-2"></i>
+                                    <small class="badge bg-primary">Word</small>
+                                {% elif extension in ['xls', 'xlsx'] %}
+                                    <i class="bi bi-file-excel text-success fs-4 me-2"></i>
+                                    <small class="badge bg-success">Excel</small>
+                                {% elif extension in ['ppt', 'pptx'] %}
+                                    <i class="bi bi-file-ppt text-warning fs-4 me-2"></i>
+                                    <small class="badge bg-warning">PowerPoint</small>
+                                {% elif extension in ['zip', 'rar', '7z', 'tar', 'gz'] %}
+                                    <i class="bi bi-file-zip text-secondary fs-4 me-2"></i>
+                                    <small class="badge bg-secondary">Archive</small>
+                                {% elif extension in ['txt', 'md'] %}
+                                    <i class="bi bi-file-text text-dark fs-4 me-2"></i>
+                                    <small class="badge bg-dark">Texte</small>
+                                {% else %}
+                                    <i class="bi bi-file-earmark text-muted fs-4 me-2"></i>
+                                    <small class="badge bg-secondary">{{ extension.upper() }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                     
+                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                        <div class="text-center bg-light" style="height: 150px; overflow: hidden;">
+                            <img src="{{ url_for('download_file', file_id=file.id) }}" 
+                                 alt="{{ file.original_name }}"
+                                 class="img-fluid h-100 w-100"
+                                 style="object-fit: cover;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div style="display: none; line-height: 150px;">
+                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                        {% elif extension in ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm'] %}
+                   
+                        <div class="text-center bg-dark d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <div class="text-white">
+                                <i class="bi bi-play-circle" style="font-size: 3rem;"></i>
+                                <div class="small mt-2">Cliquez pour télécharger</div>
+                            </div>
+                        </div>
+                        {% elif extension in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'] %}
+                     
+                        <div class="text-center bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <div class="text-info">
+                                <i class="bi bi-music-note-beamed" style="font-size: 3rem;"></i>
+                                <div class="small mt-2">Fichier audio</div>
+                            </div>
+                        </div>
+                        {% else %}
+                     
+                        <div class="text-center bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <div class="text-muted">
+                                {% if extension in ['pdf'] %}
+                                    <i class="bi bi-file-pdf" style="font-size: 3rem;"></i>
+                                {% elif extension in ['doc', 'docx'] %}
+                                    <i class="bi bi-file-word" style="font-size: 3rem;"></i>
+                                {% elif extension in ['xls', 'xlsx'] %}
+                                    <i class="bi bi-file-excel" style="font-size: 3rem;"></i>
+                                {% elif extension in ['zip', 'rar', '7z'] %}
+                                    <i class="bi bi-file-zip" style="font-size: 3rem;"></i>
+                                {% else %}
+                                    <i class="bi bi-file-earmark" style="font-size: 3rem;"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <h6 class="card-title text-truncate fw-bold" title="{{ file.original_name }}">
+                                {{ file.original_name }}
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <div class="row g-2 small text-muted">
+                                    <div class="col-12">
+                                        <i class="bi bi-calendar3"></i> 
+                                        {{ file.upload_date.split('.')[0] }}
+                                    </div>
+                                    <div class="col-12">
+                                        <i class="bi bi-hdd"></i> 
+                                        <span class="fw-semibold">{{ file.formatted_size }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('download_file', file_id=file.id) }}" 
+                                   class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Télécharger
+                                </a>
+                                
+                               
+                                {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        onclick="previewImage('{{ url_for('download_file', file_id=file.id) }}', '{{ file.original_name }}')">
+                                    <i class="bi bi-eye"></i> Aperçu
+                                </button>
+                                {% elif extension in ['mp4', 'webm'] %}
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        onclick="previewVideo('{{ url_for('download_file', file_id=file.id) }}', '{{ file.original_name }}')">
+                                    <i class="bi bi-play"></i> Lire
+                                </button>
+                                {% elif extension in ['mp3', 'wav', 'ogg', 'm4a'] %}
+                                <button class="btn btn-outline-info btn-sm" 
+                                        onclick="previewAudio('{{ url_for('download_file', file_id=file.id) }}', '{{ file.original_name }}')">
+                                    <i class="bi bi-play-circle"></i> Écouter
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                </div>
+                <h3 class="text-muted">Aucun fichier disponible</h3>
+                <p class="text-muted">L'administrateur n'a pas encore ajouté de fichiers.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewTitle">Aperçu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" id="previewContent">
+            
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body bg-gradient" style="background: linear-gradient(135deg, #17a2b8, #20c997);">
+                <div class="text-white">
+                    <h5 class="mb-3">
+                        <i class="bi bi-wifi"></i> Accès réseau
+                    </h5>
+                    <p class="mb-2">
+                        <strong>Accès local :</strong> http://localhost:5000
+                    </p>
+                    <p class="mb-0">
+                        <strong>Accès réseau :</strong> http://[IP_SERVEUR]:5000
+                    </p>
+                    <small class="opacity-75">
+                        Remplacez [IP_SERVEUR] par l'adresse IP de cette machine
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function previewImage(url, title) {
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewContent').innerHTML = `
+        <img src="${url}" class="img-fluid rounded" alt="${title}" style="max-height: 70vh;">
+    `;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+
+function previewVideo(url, title) {
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewContent').innerHTML = `
+        <video controls class="w-100 rounded" style="max-height: 70vh;">
+            <source src="${url}" type="video/mp4">
+            Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
+    `;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+
+function previewAudio(url, title) {
+    document.getElementById('previewTitle').textContent = title;
+    document.getElementById('previewContent').innerHTML = `
+        <div class="p-4">
+            <div class="mb-4">
+                <i class="bi bi-music-note-beamed display-4 text-info"></i>
+            </div>
+            <audio controls class="w-100">
+                <source src="${url}">
+                Votre navigateur ne supporte pas la lecture audio.
+            </audio>
+        </div>
+    `;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+</script>
+
+{% endblock %}
