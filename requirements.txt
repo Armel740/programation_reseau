@@ -3,3 +3,5 @@ Flask-Login==0.6.3
 Werkzeug==2.3.7
 
 gunicorn
+
+flask_socketio
