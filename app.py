@@ -109,7 +109,7 @@ def admin_login():
         password = request.form['password']
         
         
-        if username == 'admin' and password == 'admin123':
+        if username == 'Armel' and password == 'armel740':
             session['admin_logged_in'] = True
             flash('Connexion réussie', 'success')
             return redirect(url_for('admin'))
